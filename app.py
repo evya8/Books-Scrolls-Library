@@ -58,10 +58,10 @@ class User(db.Model):
 @app.route('/')
 def home():
         return "home"
-                                            ###---Routes---###
-                                            #-CRUD For Books Table-#
+                                                    ###---Routes---###
+                                                    #-CRUD For Books Table-#
 
-@app.route('/addbook', methods=['POST'])  # Create - Add a book to the library
+@app.route('/addbook', methods=['POST'])              ## Create - Add a book to the library
 def add_book():
     try:
         data = request.get_json()
@@ -87,7 +87,7 @@ def add_book():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/books', methods=['GET'])  # Read - Display all Books in the Library
+@app.route('/books', methods=['GET'])                    ## Read - Display all Books in the Library
 def get_books():
     try:
         books = []
@@ -105,9 +105,46 @@ def get_books():
         return jsonify(books)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+      
+@app.route('/upd_book/<int:book_id>', methods=['PUT'])         ## Update - Update and change Book details
+def upd_book(book_id):
+    book_to_update = Books.query.get(book_id)
+    if not book_to_update:                              # Checking the book exist
+        return jsonify({"error": "Book not found"}), 404
 
-#Update
-#Delete    
+    if request.method == 'PUT':                        # Update book details from the JSON data
+        try:
+            data = request.get_json()
+            book_to_update.title = data.get('title', book_to_update.title)
+            book_to_update.author = data.get('author', book_to_update.author)
+            book_to_update.description = data.get('description', book_to_update.description)
+            book_to_update.year_published = data.get('year_published', book_to_update.year_published)
+            book_to_update.book_type = data.get('book_type', book_to_update.book_type)
+            book_to_update.book_status = data.get('book_status', book_to_update.book_status)
+            book_to_update.photo_url = data.get('photo_url', book_to_update.photo_url)
+
+            db.session.commit()           # Commit the changes to the database
+            return jsonify({'message': f'The Book "{book_to_update.title}" was updated successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f'Error updating book: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'Invalid request method'}), 405
+
+
+@app.route("/del_book/<int:book_id>", methods=['DELETE'])             ## Delete - Remove a Book from Library records 
+def book(book_id):
+        try:
+            book_to_del=Books.query.get(int(book_id))       # Checking the book exist
+            if book_to_del:
+                db.session.delete(book_to_del)
+                db.session.commit()                  # Commit the changes to the database
+                return jsonify({"message": f'The Book "{book_to_del.title}" was deleted successfully'}), 200
+            return jsonify({"error": "Book not found"}), 404
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Error deleting book: {str(e)}"}), 500
+
 
   #-CRUD For Customers Table-#
 #Create
