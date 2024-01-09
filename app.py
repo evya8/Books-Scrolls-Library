@@ -45,7 +45,7 @@ class Loans(db.Model):
     condition_at_loan = db.Column(db.String(10), CheckConstraint("condition_at_loan IN ('Excellent', 'Good', 'Fair', 'Poor', 'Unusable')"), default='Excellent')
     fine_status = db.Column(db.Boolean, CheckConstraint('fine_status IN (0, 1)'), default=0)
     fine_amount = db.Column(db.Integer)
-    loan_status = db.Column(db.String(20), CheckConstraint("loan_status IN ('Pending', 'Ongoing', 'Returned')"), default='Pending')
+    loan_status = db.Column(db.String(20), CheckConstraint("loan_status IN ('Pending', 'Ongoing','Late', 'Returned')"), default='Pending')
     customers = db.relationship('Customers', back_populates='loans')  # Relationship with Customers table
     books = db.relationship('Books', back_populates='loans')  # Relationship with Books table
 
@@ -191,7 +191,7 @@ def get_customers():
 @app.route('/upd_customer/<int:customer_id>', methods=['PUT'])         ## Update - Update and change Customer details
 def upd_customer(customer_id):
     customer_to_update = Customers.query.get(customer_id)
-    if not customer_to_update:                              # Checking the customer exist
+    if not customer_to_update:                              # Checking the Customer exist
         return jsonify({"error": "Customer not found"}), 404
 
     if request.method == 'PUT':                        # Update customer details from the JSON data
@@ -214,7 +214,7 @@ def upd_customer(customer_id):
 @app.route("/del_customer/<int:customer_id>", methods=['DELETE'])             ## Delete - Remove a Customer from Library records 
 def customer(customer_id):
         try:
-            customer_to_del=Customers.query.get(int(customer_id))       # Checking the customer exist
+            customer_to_del=Customers.query.get(int(customer_id))       # Checking the Customer exist
             if customer_to_del:
                 db.session.delete(customer_to_del)
                 db.session.commit()                  # Commit the changes to the database
@@ -230,75 +230,109 @@ def customer(customer_id):
 def add_loan():
     try:
         data = request.get_json()
-        full_name = data.get("full_name")
-        city = data.get("city")
-        age = data.get("age")
-        phone_number = data.get("phone_number")
-        email = data.get("email")
+        cust_id = data.get("cust_id")
+        book_id = data.get("book_id")
+        loan_date = datetime.now().date()
+        return_date = data.get("return_date")
+        condition_at_loan = data.get("condition_at_loan")
+        loan_status = data.get("loan_status")
+
+        # Get the book type to calculate return_date
+        book_type = Books.query.filter_by(book_id=book_id).first().book_type
+        if book_type == 1:
+            return_date = loan_date + timedelta(days=10)
+        elif book_type == 2:
+            return_date = loan_date + timedelta(days=5)
+        elif book_type == 3:
+            return_date = loan_date + timedelta(days=2)
+        else:
+            return jsonify({"error": "Invalid book type"}), 400
 
         # Validate required fields
-        if None in [full_name, phone_number,email]:
+        if None in [ book_id,book_type,cust_id,condition_at_loan]:
             return jsonify({"error": "Missing required fields"}), 400
         # Validate data types if needed
-        customer = Customers(full_name=full_name, city=city,age=age, phone_number=phone_number,
-                     email=email)
+        loan = Loans(cust_id=cust_id, book_id=book_id,loan_date=loan_date , return_date=return_date,
+                     condition_at_loan=condition_at_loan, loan_status=loan_status)
         
-        db.session.add(customer)
+        db.session.add(loan)
         db.session.commit()
 
-        return jsonify({"message": "Customer successfully added"}), 201
+        return jsonify({"message": "Loan successfully added"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500        
     
-@app.route('/customers', methods=['GET'])                    ## Read - Display all Customers of the Library
-def get_customers():
+@app.route('/loans', methods=['GET'])                    ## Read - Display all Loans in the Library
+def get_loans():
     try:
-        customers = []
-        for customer in Customers.query.all():
-            customers.append({
-                "customer_id": customer.customer_id,
-                "full_name": customer.full_name,
-                "city": customer.city,
-                "age":customer.age,
-                "phone_number": customer.phone_number,
-                "email": customer.email
+        loans = []
+        for loan in Loans.query.all():
+            # Calculate the fine if the book is not returned yet
+            if loan.loan_status != 'Returned':
+                current_date = datetime.now().date()
+                if current_date > loan.return_date:
+                    days_late = (current_date - loan.return_date).days
+                    fine_rate_per_day = 0.5 
+                    fine_amount = days_late * fine_rate_per_day
+                    loan.fine_status = True
+                    loan.fine_amount = fine_amount
+                    loan.loan_status = 'Late'
+                else:
+                    loan.fine_status = False
+                    loan.fine_amount = 0
+            loans.append({
+                "loan_id": loan.loan_id,
+                "cust_id": loan.cust_id,
+                "book_id": loan.book_id,
+                "loan_date": loan.loan_date,
+                "return_date":loan.return_date,
+                "condition_at_loan": loan.condition_at_loan,
+                "fine_status": loan.fine_status,
+                "fine_amount": loan.fine_amount,
+                "loan_status": loan.loan_status
             })
-        return jsonify(customers)
+        return jsonify(loans)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
  
-@app.route('/upd_customer/<int:customer_id>', methods=['PUT'])         ## Update - Update and change Customer details
-def upd_customer(customer_id):
-    customer_to_update = Customers.query.get(customer_id)
-    if not customer_to_update:                              # Checking the customer exist
-        return jsonify({"error": "Customer not found"}), 404
+@app.route('/upd_loan/<int:loan_id>', methods=['PUT'])         ## Update - Update and change Loan details
+def upd_loan(loan_id):
+    loan_to_update = Loans.query.get(loan_id)
+    if not loan_to_update:                              # Checking the Loan exist
+        return jsonify({"error": "Loan not found"}), 404
 
-    if request.method == 'PUT':                        # Update customer details from the JSON data
+    if request.method == 'PUT':                        # Update Loan details from the JSON data
         try:
             data = request.get_json()
-            customer_to_update.full_name = data.get('full_name', customer_to_update.full_name)
-            customer_to_update.city = data.get('city', customer_to_update.city)
-            customer_to_update.age = data.get('age', customer_to_update.age)
-            customer_to_update.phone_number = data.get('phone_number', customer_to_update.phone_number)
-            customer_to_update.email = data.get('email', customer_to_update.email)
+            loan_to_update.cust_id = data.get('cust_id', loan_to_update.cust_id)
+            loan_to_update.book_id = data.get('book_id', loan_to_update.book_id)
+            loan_to_update.loan_date = data.get('loan_date', loan_to_update.loan_date)
+            loan_to_update.return_date = data.get('return_date', loan_to_update.return_date)
+            loan_to_update.condition_at_loan = data.get('condition_at_loan', loan_to_update.condition_at_loan)
+            loan_to_update.fine_status = data.get('fine_status', loan_to_update.fine_status)
+            loan_to_update.fine_amount = data.get('fine_amount', loan_to_update.fine_amount)
+            loan_to_update.loan_status = data.get('loan_status', loan_to_update.loan_status)
+            # Update return_date only if loan_status is 'Returned'
+            if data.get('loan_status') == 'Returned':
+                loan_to_update.return_date = datetime.now().date()
             
             db.session.commit()           # Commit the changes to the database
-            return jsonify({'message': f'The Customer "{customer_to_update.full_name}" details were updated successfully'}), 200
+            return jsonify({'message': f'Loan with ID "{loan_to_update.loan_id}" was updated successfully'}), 200
         except Exception as e:
             db.session.rollback()
-            return jsonify({'error': f'Error updating customer: {str(e)}'}), 500
+            return jsonify({'error': f'Error updating Loan: {str(e)}'}), 500
     else:
         return jsonify({'error': 'Invalid request method'}), 405
 
-@app.route("/del_customer/<int:customer_id>", methods=['DELETE'])             ## Delete - Remove a Customer from Library records 
-def customer(customer_id):
+@app.route("/del_loan/<int:loan_id>", methods=['DELETE'])             ## Delete - Remove a Loan from Library records 
+def loan(loan_id):
         try:
-            customer_to_del=Customers.query.get(int(customer_id))       # Checking the customer exist
-            if customer_to_del:
-                db.session.delete(customer_to_del)
+            loan_to_del=Loans.query.get(int(loan_id))       # Checking the Loan exist
+            if loan_to_del:
+                db.session.delete(loan_to_del)
                 db.session.commit()                  # Commit the changes to the database
-                return jsonify({"message": f'The Customer "{customer_to_del.full_name}" was deleted successfully'}), 200
-            return jsonify({"error": "Customer not found"}), 404
+                return jsonify({"message": f'The Loan with ID number "{loan_to_del.loan_id}" was deleted successfully'}), 200
+            return jsonify({"error": "Loan not found"}), 404
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": f"Error deleting book: {str(e)}"}), 500     
