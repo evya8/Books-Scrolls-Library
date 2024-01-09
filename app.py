@@ -59,9 +59,9 @@ class User(db.Model):
 def home():
         return "home"
                                                     ###---Routes---###
-                                                    #-CRUD For Books Table-#
+                                                    #----------------CRUD For Books Table------------#
 
-@app.route('/addbook', methods=['POST'])              ## Create - Add a book to the library
+@app.route('/add_book', methods=['POST'])              ## Create - Add a book to the library
 def add_book():
     try:
         data = request.get_json()
@@ -145,18 +145,164 @@ def book(book_id):
             db.session.rollback()
             return jsonify({"error": f"Error deleting book: {str(e)}"}), 500
 
+                                                    #-----------CRUD For Customers Table----------------#
+        
+@app.route('/add_customer', methods=['POST'])              ## Create - Add New Customer
+def add_customer():
+    try:
+        data = request.get_json()
+        full_name = data.get("full_name")
+        city = data.get("city")
+        age = data.get("age")
+        phone_number = data.get("phone_number")
+        email = data.get("email")
 
-  #-CRUD For Customers Table-#
-#Create
-#Read
-#Update
-#Delete     
+        # Validate required fields
+        if None in [full_name, phone_number,email]:
+            return jsonify({"error": "Missing required fields"}), 400
+        # Validate data types if needed
+        customer = Customers(full_name=full_name, city=city,age=age, phone_number=phone_number,
+                     email=email)
+        
+        db.session.add(customer)
+        db.session.commit()
 
-  #-CRUD For Loans Table-#  
-#Create
-#Read
-#Update
-#Delete 
+        return jsonify({"message": "Customer successfully added"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500        
+    
+@app.route('/customers', methods=['GET'])                    ## Read - Display all Customers of the Library
+def get_customers():
+    try:
+        customers = []
+        for customer in Customers.query.all():
+            customers.append({
+                "customer_id": customer.customer_id,
+                "full_name": customer.full_name,
+                "city": customer.city,
+                "age":customer.age,
+                "phone_number": customer.phone_number,
+                "email": customer.email
+            })
+        return jsonify(customers)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+ 
+@app.route('/upd_customer/<int:customer_id>', methods=['PUT'])         ## Update - Update and change Customer details
+def upd_customer(customer_id):
+    customer_to_update = Customers.query.get(customer_id)
+    if not customer_to_update:                              # Checking the customer exist
+        return jsonify({"error": "Customer not found"}), 404
+
+    if request.method == 'PUT':                        # Update customer details from the JSON data
+        try:
+            data = request.get_json()
+            customer_to_update.full_name = data.get('full_name', customer_to_update.full_name)
+            customer_to_update.city = data.get('city', customer_to_update.city)
+            customer_to_update.age = data.get('age', customer_to_update.age)
+            customer_to_update.phone_number = data.get('phone_number', customer_to_update.phone_number)
+            customer_to_update.email = data.get('email', customer_to_update.email)
+            
+            db.session.commit()           # Commit the changes to the database
+            return jsonify({'message': f'The Customer "{customer_to_update.full_name}" details were updated successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f'Error updating customer: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'Invalid request method'}), 405
+
+@app.route("/del_customer/<int:customer_id>", methods=['DELETE'])             ## Delete - Remove a Customer from Library records 
+def customer(customer_id):
+        try:
+            customer_to_del=Customers.query.get(int(customer_id))       # Checking the customer exist
+            if customer_to_del:
+                db.session.delete(customer_to_del)
+                db.session.commit()                  # Commit the changes to the database
+                return jsonify({"message": f'The Customer "{customer_to_del.full_name}" was deleted successfully'}), 200
+            return jsonify({"error": "Customer not found"}), 404
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Error deleting book: {str(e)}"}), 500     
+
+                                                    #--------------CRUD For Loans Table----------------#  
+
+@app.route('/add_loan', methods=['POST'])              ## Create - Add New Loan
+def add_loan():
+    try:
+        data = request.get_json()
+        full_name = data.get("full_name")
+        city = data.get("city")
+        age = data.get("age")
+        phone_number = data.get("phone_number")
+        email = data.get("email")
+
+        # Validate required fields
+        if None in [full_name, phone_number,email]:
+            return jsonify({"error": "Missing required fields"}), 400
+        # Validate data types if needed
+        customer = Customers(full_name=full_name, city=city,age=age, phone_number=phone_number,
+                     email=email)
+        
+        db.session.add(customer)
+        db.session.commit()
+
+        return jsonify({"message": "Customer successfully added"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500        
+    
+@app.route('/customers', methods=['GET'])                    ## Read - Display all Customers of the Library
+def get_customers():
+    try:
+        customers = []
+        for customer in Customers.query.all():
+            customers.append({
+                "customer_id": customer.customer_id,
+                "full_name": customer.full_name,
+                "city": customer.city,
+                "age":customer.age,
+                "phone_number": customer.phone_number,
+                "email": customer.email
+            })
+        return jsonify(customers)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+ 
+@app.route('/upd_customer/<int:customer_id>', methods=['PUT'])         ## Update - Update and change Customer details
+def upd_customer(customer_id):
+    customer_to_update = Customers.query.get(customer_id)
+    if not customer_to_update:                              # Checking the customer exist
+        return jsonify({"error": "Customer not found"}), 404
+
+    if request.method == 'PUT':                        # Update customer details from the JSON data
+        try:
+            data = request.get_json()
+            customer_to_update.full_name = data.get('full_name', customer_to_update.full_name)
+            customer_to_update.city = data.get('city', customer_to_update.city)
+            customer_to_update.age = data.get('age', customer_to_update.age)
+            customer_to_update.phone_number = data.get('phone_number', customer_to_update.phone_number)
+            customer_to_update.email = data.get('email', customer_to_update.email)
+            
+            db.session.commit()           # Commit the changes to the database
+            return jsonify({'message': f'The Customer "{customer_to_update.full_name}" details were updated successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f'Error updating customer: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'Invalid request method'}), 405
+
+@app.route("/del_customer/<int:customer_id>", methods=['DELETE'])             ## Delete - Remove a Customer from Library records 
+def customer(customer_id):
+        try:
+            customer_to_del=Customers.query.get(int(customer_id))       # Checking the customer exist
+            if customer_to_del:
+                db.session.delete(customer_to_del)
+                db.session.commit()                  # Commit the changes to the database
+                return jsonify({"message": f'The Customer "{customer_to_del.full_name}" was deleted successfully'}), 200
+            return jsonify({"error": "Customer not found"}), 404
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Error deleting book: {str(e)}"}), 500     
+
 
 
 
