@@ -453,7 +453,58 @@ def get_images():
             image_list.append(f"http://127.0.0.1:5000/uploads/{filename}")  # Replace with your server URL and path
     return jsonify({'images': image_list})
 
+                                             ## User-specific data request
+@app.route("/user/library_card", methods=["GET"])
+@jwt_required()
+def library_card():
+    try:
+        current_user = get_jwt_identity()
 
+        # Fetch user-specific data from the three tables
+        customer_data = Customers.query.filter_by(email=current_user).first()
+        books_data = Books.query.join(Loans).filter_by(cust_id=customer_data.customer_id).all()
+        loans_data = Loans.query.filter_by(cust_id=customer_data.customer_id).all()
+
+        # Consolidate the data into a dictionary
+        user_data = {
+            "customer_info": {
+                "customer_id": customer_data.customer_id,
+                "full_name": customer_data.full_name,
+                "phone_number": customer_data.phone_number,
+                "email": customer_data.email,
+            },
+            "books_info": [
+                {
+                    "book_id": book.book_id,
+                    "title": book.title,
+                    "author": book.author,
+                    "book_type": book.book_type,
+                    "photo_url": book.photo_url,
+                }
+                for book in books_data
+            ],
+            "loans_info": [
+                {
+                    "customer_id": loan.customer_id,
+                    "loan_id": loan.loan_id,
+                    "loan_date": loan.loan_date,
+                    "return_date": loan.return_date,
+                    "fine_status": loan.fine_status,
+                    "fine_amount": loan.fine_amount,
+                    "loan_status": loan.loan_status,
+                }
+                for loan in loans_data
+            ],
+        }
+
+        return jsonify(user_data)
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Unable to fetch user data"}), 500
+
+
+                                               ##------- Librarian Route -----##
 
 if __name__ == '__main__':
     with app.app_context():
