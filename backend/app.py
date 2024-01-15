@@ -1,3 +1,4 @@
+import json
 import os
 from flask import Flask , session , request , jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -8,6 +9,8 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 app.secret_key = 'your_secret_key'
 
 # SQLAlchemy configuration
@@ -24,7 +27,7 @@ app.config["DEFAULT_IMG"] = "static/images/bookcover.jpeg"
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-CORS(app)
+
 
 #Defining the Books Table
 class Books(db.Model):
@@ -122,10 +125,36 @@ def get_books():
         return jsonify(books)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+                                                           # Read - Send Data of a specific book
+@app.route('/books/<int:book_id>', methods=['GET'])
+def get_book_by_id(book_id):
+    try:
+        book = Books.query.get(book_id)
+
+        if not book:
+            return jsonify({"error": "Book not found"}), 404
+
+        book_details = {
+            "book_id": book.book_id,
+            "title": book.title,
+            "author": book.author,
+            "category": book.category,
+            "description": book.description,
+            "year_published": book.year_published,
+            "book_type": book.book_type,
+            "book_status": book.book_status,
+            "photo_url": book.photo_url
+        }
+
+        return jsonify(book_details)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
       
 @app.route('/upd_book/<int:book_id>', methods=['PUT'])         ## Update - Update and change Book details
 def upd_book(book_id):
+ 
     book_to_update = Books.query.get(book_id)
+    
     if not book_to_update:                              # Checking the book exist
         return jsonify({"error": "Book not found"}), 404
 
@@ -140,7 +169,7 @@ def upd_book(book_id):
             book_to_update.book_type = data.get('book_type', book_to_update.book_type)
             book_to_update.book_status = data.get('book_status', book_to_update.book_status)
             book_to_update.photo_url = data.get('photo_url', book_to_update.photo_url)
-
+      
             db.session.commit()           # Commit the changes to the database
             return jsonify({'message': f'The Book "{book_to_update.title}" was updated successfully'}), 200
         except Exception as e:
