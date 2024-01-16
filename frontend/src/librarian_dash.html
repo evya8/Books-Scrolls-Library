@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Librarian Dashboard</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" id="overview-link">Overview</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="customers-link">Customers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="books-link">Books</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="loans-link">Loans</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Container for Sections -->
+    <div class="container mt-4" id="section-container">
+        <div class="col-md-6">
+            <div class="card content-section" id="overview-section">
+                <div class="card-header">
+                    <h5 class="card-title">Overview</h5>
+                </div>
+                <div class="card-body" id="overview-content">
+                    <!-- Overview content will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Customers Section -->
+        <div class="col-md-6">
+            <div class="card content-section" id="customers-section">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="card-title">Customers</h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                        Add Customer
+                    </button>
+                </div>
+                <div class="card-body" id="customers-content">
+                    <!-- Customers content will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Books Section -->
+        <div class="col-md-6">
+            <div class="card content-section" id="books-section">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="card-title">Books</h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                        Add Book
+                    </button>
+                </div>
+                <div class="card-body" id="books-content">
+                    <!-- Books content will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loans Section -->
+        <div class="col-md-6">
+            <div class="card content-section" id="loans-section">
+                <div class="card-header">
+                    <h5 class="card-title">Loans</h5>
+                </div>
+                <div class="card-body" id="loans-content">
+                    <!-- Loans content will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Add Book Modal -->
+    <div class="modal fade" id="addBookModal" tabindex="-1" role="dialog" aria-labelledby="addBookModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBookModalLabel">Add Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Your Add Book Form -->
+                    <form id="addBook">
+                        <!-- Input fields for book details -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" placeholder="Title of the book"
+                                name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="author" class="form-label">Author</label>
+                            <input type="text" class="form-control" id="author" placeholder="Author of the book"
+                                name="author" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="category" placeholder="Category" name="category"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description"
+                                placeholder="Description of the plot" name="description" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="year_published" class="form-label">Year Published</label>
+                            <input type=int class="form-control" id="year_published" placeholder="1950"
+                                name="year_published" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="book_type" class="form-label">Loan Time</label>
+                            <select class="form-select" id="book_type" name="book_type" required>
+                                <option value="1">2 days</option>
+                                <option value="2">5 days</option>
+                                <option value="3">10 days</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="book_status" class="form-label">Book Status</label>
+                            <select class="form-select" id="book_status" name="book_status" required>
+                                <option value="Available" selected>Available</option>
+                                <option value="On_loan">On Loan</option>
+                                <option value="Unavailable">Unavailable</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="AddBook()">Add Book</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Book Modal -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Your Edit Book Form -->
+                    <form id="editBook">
+                        <!-- Input fields for book details -->
+                        <div class="mb-3">
+                            <label for="edit-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="edit-title" name="title" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-author" class="form-label">Author</label>
+                            <input type="text" class="form-control" id="edit-author" name="author" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="edit-category" name="category" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="edit-description" name="description" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-year_published" class="form-label">Year Published</label>
+                            <input type="number" class="form-control" id="edit-year_published" name="year_published"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-book_type" class="form-label">Loan Time</label>
+                            <select class="form-select" id="edit-book_type" name="book_type" required>
+                                <option value="1">2 days</option>
+                                <option value="2">5 days</option>
+                                <option value="3">10 days</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-book_status" class="form-label">Book Status</label>
+                            <select class="form-select" id="edit-book_status" name="book_status" required>
+                                <option value="Available" selected>Available</option>
+                                <option value="On_loan">On Loan</option>
+                                <option value="Unavailable">Unavailable</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-photo_url" class="form-label">Photo URL</label>
+                            <input type="text" class="form-control" id="edit-photo_url" name="photo_url" >
+                        </div>
+                        <div class="mb-3">
+                            <input type="hidden" id="edit-book_id" name="book_id">
+                        </div>
+                        
+                        <!-- Buttons for actions -->
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="updateBook()">Update Book</button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel"
+aria-hidden="true">
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="addCustomerModalLabel">Add Customer</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <!-- Your Add Customer Form -->
+            <form id="addCustomer">
+                <!-- Input fields for Customer details -->
+                <div class="mb-3">
+                    <label for="full_name" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="full_name" placeholder="Full Name"
+                        name="full_name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" class="form-control" id="city" placeholder="City of residense"
+                        name="city" required>
+                </div>
+                <div class="mb-3">
+                    <label for="age" class="form-label">Age</label>
+                    <input type=int class="form-control" id="age" placeholder="Your Age"
+                        name="age" required>
+                </div>
+                <div class="mb-3">
+                    <label for="phone_number" class="form-label">Phone Number</label>
+                    <input type=int class="form-control" id="phone_number" placeholder="Your Phone Number" name="phone_number"
+                        required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="text" class="form-control" id="email"
+                        placeholder="Youremail@Address" name="email" required>
+                </div>
+                
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="AddCustomer()">Add Customer</button>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="editCustomerModalLabel">Edit Customer</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <!-- Your Edit Customer Form -->
+            <form id="editCustomer">
+                <!-- Input fields for Customer details -->
+                <div class="mb-3">
+                    <label for="edit-full_name" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="edit-full_name" name="full_name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="edit-city" class="form-label">City</label>
+                    <input type="text" class="form-control" id="edit-city" name="city" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="edit-age" class="form-label">Age</label>
+                    <input type=int class="form-control" id="edit-age" name="age" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="edit-phone_number" class="form-label">Phone Number</label>
+                    <input type=int class="form-control" id="edit-phone_number" name="phone_number" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="edit-email" class="form-label">Email Address</label>
+                    <input type="text" class="form-control" id="edit-email" name="email"
+                        required>
+                </div>
+                <!-- Buttons for actions -->
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updateCustomer()">Update Customer</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+</div>
+
+    <script>
+        const MY_SERVER = "http://127.0.0.1:5000"
+
+        function displayOverview() {
+            // Get the element where overview content will be displayed
+            const overviewContentElement = document.getElementById('overview-content');
+
+            // Axios GET request to the '/customers' endpoint
+            axios.get(`${MY_SERVER}/customers`)
+                .then(response => {
+                    const totalCustomers = response.data.length;
+                    overviewContentElement.innerHTML = `<p>Total Number of Customers: ${totalCustomers}</p>`;
+
+                    //Axios GET request to the '/loans' endpoint
+                    axios.get(`${MY_SERVER}/loans`)
+                        .then(response => {
+                            const ongoingAndLateLoans = response.data.filter(loan => loan.loan_status === 'Ongoing' || loan.loan_status === 'Late');
+                            const totalOngoingAndLateCount = ongoingAndLateLoans.length;
+                            // Display the sum of ongoing and late loans
+                            overviewContentElement.innerHTML += `<p>Total Active Loans: ${totalOngoingAndLateCount}</p>`;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching active loans:', error);
+                            // Handle errors for ongoing and late loans as needed
+                        });
+                })
+                .catch(error => {
+                    console.error(error);
+                    // Handle errors for customers as needed
+                });
+        }
+
+        // Call the function when the page loads
+        window.addEventListener('load', displayOverview);
+
+        // Set up event listener for navigation links
+        document.getElementById('overview-link').addEventListener('click', displayOverview);
+
+
+        function displayBooks() {
+            // Get the element where books content will be displayed
+            const booksContentElement = document.getElementById('books-content');
+
+            // Make an Axios GET request to the '/books' endpoint
+            axios.get(`${MY_SERVER}/books`)
+                .then(response => {
+                    const books = response.data;
+
+                    // Display all books with details
+                    booksContentElement.innerHTML = `
+                        <h6>All Books:</h6>
+                        <div class="row">
+                            ${books.map(book => `
+                                <div class="col-md-4 mb-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">${book.title}</h6>
+                                            <p class="card-text">Author: ${book.author}</p>
+                                            <p class="card-text">Category: ${book.category}</p>
+                                            <p class="card-text">Description: ${book.description}</p>
+                                            <p class="card-text">Year Published: ${book.year_published}</p>
+                                            <p class="card-text">Type: ${book.book_type}</p>
+                                            <p class="card-text">Status: ${book.book_status}</p>
+                                            <img src="../../static/images/bookcover.jpg" class="img-fluid" alt="Book Cover">
+                                            <button class="btn btn-danger btn-sm mt-2" onclick="deleteBook(${book.book_id})">Delete</button>
+                                            <button class="btn btn-primary btn-sm mt-2" onclick="openEditModal(${book.book_id})">Edit</button>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error fetching books:', error);
+                    // Handle errors for books as needed
+                });
+        }
+        // Set up event listener for navigation links
+        document.getElementById('books-link').addEventListener('click', displayBooks);
+
+        // Add Book function
+        function AddBook() {
+            const form = document.getElementById('addBook');
+            const formData = new FormData(form);
+
+            // Make an Axios POST request to add a book
+            axios.post(`${MY_SERVER}/add_book`, {
+                title: formData.get('title'),
+                author: formData.get('author'),
+                category: formData.get('category'),
+                description: formData.get('description'),
+                year_published: formData.get('year_published'),
+                book_type: formData.get('book_type'),
+                book_status: formData.get('book_status'),
+                photo_url: formData.get('photo_url')
+            })
+                .then(response => {
+                    // Display success message
+                    Toastify({
+                        text: response.data.message,
+                        backgroundColor: "green",
+                        close: true,
+                        duration: 3000
+                    }).showToast();
+
+                    // Close the modal after success
+                    $('#addBookModal').modal('hide');
+
+                    // Refresh the books content
+                    displayBooks();
+                })
+                .catch(error => {
+                    console.error('Error adding book:', error);
+                    // Display error message
+                    Toastify({
+                        text: 'Error adding book',
+                        backgroundColor: "red",
+                        close: true,
+                        duration: 3000
+                    }).showToast();
+                });
+        }
+
+        // Function to edit book data in modal
+        function openEditModal(bookId) {
+            // Get book details by ID using an Axios GET request
+            axios.get(`${MY_SERVER}/books/${bookId}`)
+                .then(response => {
+                    const bookToEdit = response.data;
+
+                    // Populate the form fields with book data
+                    document.getElementById('edit-title').value = bookToEdit.title;
+                    document.getElementById('edit-author').value = bookToEdit.author;
+                    document.getElementById('edit-category').value = bookToEdit.category;
+                    document.getElementById('edit-description').value = bookToEdit.description;
+                    document.getElementById('edit-year_published').value = bookToEdit.year_published;
+                    document.getElementById('edit-book_type').value = bookToEdit.book_type;
+                    document.getElementById('edit-book_status').value = bookToEdit.book_status;
+                    document.getElementById('edit-photo_url').value = bookToEdit.photo_url;
+                    
+
+
+                    // Open the editBookModal
+                    $('#editBookModal').modal('show');
+                })
+                .catch(error => {
+                    console.error('Error fetching book details:', error);
+                    // Handle error as needed
+                });
+        }
+        // Update Book function
+        function updateBook() {
+           
+            // Get the form data
+            const form = document.getElementById('editBook');
+            const formData = new FormData(form);
+            
+            // Get the book ID from a hidden field in the form
+            const bookId = formData.get('book_id');
+         
+            // Make an Axios PUT request to update the book
+            axios.put(`${MY_SERVER}/upd_book/${bookId}`, {
+                title: formData.get('title'),
+                author: formData.get('author'),
+                category: formData.get('category'),
+                description: formData.get('description'),
+                year_published: formData.get('year_published'),
+                book_type: formData.get('book_type'),
+                book_status: formData.get('book_status'),
+                photo_url: formData.get('photo_url')
+            })
+            
+                .then(response => {
+                    // Display success message
+                    Toastify({
+                        text: response.data.message,
+                        backgroundColor: "green",
+                        close: true,
+                        duration: 3000
+                    }).showToast();
+
+                    // Close the modal after success
+                    $('#editBookModal').modal('hide');
+
+                    // Refresh the books content
+                    displayBooks();
+                })
+                .catch(error => {
+                    console.error('Error updating book:', error);
+                    // Display error message
+                    Toastify({
+                        text: 'Error updating book',
+                        backgroundColor: "red",
+                        close: true,
+                        duration: 3000
+                    }).showToast();
+                });
+        }
+
+
+
+        // Function to delete a book
+        function deleteBook(bookId) {
+            const confirmDelete = confirm('Are you sure you want to delete this book?');
+
+            if (confirmDelete) {
+                // Make an Axios DELETE request to the '/del_book' endpoint
+                axios.delete(`${MY_SERVER}/del_book/${bookId}`)
+                    .then(response => {
+                        // Display success message
+                        Toastify({
+                            text: response.data.message,
+                            backgroundColor: "green",
+                            close: true,
+                            duration: 3000
+                        }).showToast();
+
+                        // Refresh the books content after deletion
+                        displayBooks();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting book:', error);
+                        // Display error message
+                        Toastify({
+                            text: 'Error deleting book',
+                            backgroundColor: "red",
+                            close: true,
+                            duration: 3000
+                        }).showToast(); });}}
+
+                        function displayCustomers() {
+    // Get the element where customers content will be displayed
+    const customersContentElement = document.getElementById('customers-content');
+
+    // Make an Axios GET request to the '/customers' endpoint
+    axios.get(`${MY_SERVER}/customers`)
+        .then(response => {
+            const customers = response.data;
+
+            // Display all customers with details
+            customersContentElement.innerHTML = `
+                <h6>All Customers:</h6>
+                <div class="row">
+                    ${customers.map(customer => `
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-Full Name">${customer.full_name}</h6>
+                                    <p class="card-text">City: ${customer.city}</p>
+                                    <p class="card-text">Age: ${customer.age}</p>
+                                    <p class="card-text">Phone Number: ${customer.phone_number}</p>
+                                    <p class="card-text">Email Address: ${customer.email}</p>
+                                    <button class="btn btn-danger btn-sm mt-2" onclick="deleteCustomer(${customer.customer_id})">Delete</button>
+                                    <button class="btn btn-primary btn-sm mt-2" onclick="openEditModal(${customer.customer_id})">Edit</button>
+
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Error fetching customers:', error);
+            // Handle errors for customers as needed
+        });
+}
+// Set up event listener for navigation links
+document.getElementById('customers-link').addEventListener('click', displayCustomers);
+
+// Add Customer function
+function AddCustomer() {
+    const form = document.getElementById('addCustomer');
+    const formData = new FormData(form);
+
+    // Make an Axios POST request to add a Customer
+    axios.post(`${MY_SERVER}/add_customer`, {
+        full_name: formData.get('full_name'),
+        city: formData.get('city'),
+        age: formData.get('age'),
+        phone_number: formData.get('phone_number'),
+        email: formData.get('email')
+    })
+        .then(response => {
+            // Display success message
+            Toastify({
+                text: response.data.message,
+                backgroundColor: "green",
+                close: true,
+                duration: 3000
+            }).showToast();
+
+            // Close the modal after success
+            $('#addCustomerModal').modal('hide');
+
+            // Refresh the Customers content
+            displayCustomers();
+        })
+        .catch(error => {
+            console.error('Error adding customer:', error);
+            // Display error message
+            Toastify({
+                text: 'Error adding customer',
+                backgroundColor: "red",
+                close: true,
+                duration: 3000
+            }).showToast();
+        });
+}
+
+// Function to edit customer data in modal
+function openEditModal(customerId) {
+    // Get customer details by ID using an Axios GET request
+    axios.get(`${MY_SERVER}/customers/${customerId}`)
+        .then(response => {
+            const customerToEdit = response.data;
+
+            // Populate the form fields with book data
+            document.getElementById('edit-full_name').value = customerToEdit.full_name;
+            document.getElementById('edit-city').value = customerToEdit.city;
+            document.getElementById('edit-age').value = customerToEdit.age;
+            document.getElementById('edit-phone_number').value = customerToEdit.phone_number;
+            document.getElementById('edit-email').value = customerToEdit.email;
+
+            // Open the editBookModal
+            $('#editCustomerModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error fetching book details:', error);
+            // Handle error as needed
+        });
+}
+// Update Customer function
+function updateCustomer() {
+   
+    // Get the form data
+    const form = document.getElementById('editCustomer');
+    const formData = new FormData(form);
+    
+    // Get the Customer ID from a hidden field in the form
+    const customerId = formData.get('customer_id');
+ 
+    // Make an Axios PUT request to update the customer
+    axios.put(`${MY_SERVER}/upd_customer/${customerId}`, {
+        full_name: formData.get('full_name'),
+        city: formData.get('city'),
+        age: formData.get('age'),
+        phone_number: formData.get('phone_number'),
+        email: formData.get('email'),
+    })
+    
+        .then(response => {
+            // Display success message
+            Toastify({
+                text: response.data.message,
+                backgroundColor: "green",
+                close: true,
+                duration: 3000
+            }).showToast();
+
+            // Close the modal after success
+            $('#editCustomerModal').modal('hide');
+
+            // Refresh the Customers content
+            displayCustomers();
+        })
+        .catch(error => {
+            console.error('Error updating Customer:', error);
+            // Display error message
+            Toastify({
+                text: 'Error updating Customer',
+                backgroundColor: "red",
+                close: true,
+                duration: 3000
+            }).showToast();
+        });
+}
+
+
+
+// Function to delete a Customer
+function deleteCustomer(customerId) {
+    const confirmDelete = confirm('Are you sure you want to delete this Customer?');
+
+    if (confirmDelete) {
+        // Make an Axios DELETE request to the '/del_customer' endpoint
+        axios.delete(`${MY_SERVER}/del_customer/${customerId}`)
+            .then(response => {
+                // Display success message
+                Toastify({
+                    text: response.data.message,
+                    backgroundColor: "green",
+                    close: true,
+                    duration: 3000
+                }).showToast();
+
+                // Refresh the customers content after deletion
+                displayCustomers();
+            })
+            .catch(error => {
+                console.error('Error deleting customer:', error);
+                // Display error message
+                Toastify({
+                    text: 'Error deleting customer',
+                    backgroundColor: "red",
+                    close: true,
+                    duration: 3000
+                }).showToast();});}}
+
+
+
+        // Show Overview section by default
+        document.getElementById('overview-section').style.display = 'block';
+        // Hide other sections initially
+        document.getElementById('customers-section').style.display = 'none';
+        document.getElementById('books-section').style.display = 'none';
+        document.getElementById('loans-section').style.display = 'none';
+
+        // Add event listeners to show corresponding section on link click
+        document.getElementById('overview-link').addEventListener('click', function () { showSection('overview-section'); });
+        document.getElementById('customers-link').addEventListener('click', function () { showSection('customers-section'); });
+        document.getElementById('books-link').addEventListener('click', function () { showSection('books-section'); });
+        document.getElementById('loans-link').addEventListener('click', function () { showSection('loans-section'); });
+
+        function showSection(sectionId) {   // Hide the current section
+            document.querySelectorAll('.content-section').forEach(function (section) { section.style.display = 'none'; });
+            // Show the selected section
+            document.getElementById(sectionId).style.display = 'block';
+        }
+
+
+
+    </script>
+</body>
+
+</html>

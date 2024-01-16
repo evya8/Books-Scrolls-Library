@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books & Scrolls - Your Public Library</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="../../static/favicon.ico">
+    <link rel="stylesheet" href="../../static/style.css">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <img src="../../static/logo.png" width="135" class="img-fluid rounded" alt="Books & Scrolls Logo">
+
+        <a class="navbar-brand" href="#">
+            Books & Scrolls<br>
+            Public Library
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link text-purple" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-brown" href="#">Register</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-burgundy" href="#">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-yellow" href="#">My Library Card</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-purple" href="#">Browse Books</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-brown" href="#">Loan a Book</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-burgundy" href="#">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <!-- Main content -->
+    <div class="container mt-4">
+        <h3 class="display-6">Books & Scrolls</h3>
+        <p class="text-brown lead">Open the window to a boundless world of knowledge.<br>
+            Immerse yourself in the treasures of literature, <br>
+            Join us on our journey to explore,learn<br>
+            and be captivated by the magic of storytelling.
+        </p>
+    </div>
+    <!--Login and Register Cards-->
+    <div class="container mt-4" style="width: 50%">
+        <div class="row">
+            <div class="col-md-6"></div>
+            <div class="col-md-6 d-flex align-items-center justify-content-center">
+                <!-- Login Card -->
+                <div class="card bg-burgundy">
+                    <div class="card-body">
+                        <h5 class="card-title">Login</h5>
+                        <form>
+                            <div class="mb-3">
+                                <label for="loginUsername" class="form-label">User Name</label>
+                                <input type="text" class="form-control" id="loginUsername" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="loginPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="login()">Login and start
+                                reading</button>
+                            <!-- Register Modal Button -->
+                            <button type="button" class="btn btn-success mt-2" data-bs-toggle="modal"
+                                data-bs-target="#registerModal">
+                                Signup for your library card
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">Register User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">User Name</label>
+                            <input type="text" class="form-control" id="registerUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="register()">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MY_SERVER = "http://127.0.0.1:5000";
+        const login = async () => {                              //  Login logic here
+            try {
+                const loginUsername = document.getElementById("loginUsername");
+                const loginPassword = document.getElementById("loginPassword");
+
+                const response = await axios.post(`${MY_SERVER}/user/login`, {
+                    username: loginUsername.value,
+                    password: loginPassword.value
+                })
+                sessionStorage.setItem("access_token", response.data.access_token)
+
+
+                Toastify({                                      // Display success message
+                    text: "Login successful!", duration: 3000, close: true,
+                    gravity: "top-right", position: "center", backgroundColor: "green", stopOnFocus: true,
+                }).showToast();
+
+            } catch (error) {
+
+                Toastify({                                      // Display error message
+                    text: "Login failed. Please try again.", duration: 4000, close: true, gravity: "top",
+                    position: "left", backgroundColor: "red", stopOnFocus: true,
+                }).showToast();
+                console.error(error);
+            }
+        };
+
+        const register = async () => {                              //  Registration logic here
+            try {
+                const registerUsername = document.getElementById("registerUsername");
+                const registerPassword = document.getElementById("registerPassword");
+
+                const response = await axios.post(`${MY_SERVER}/user/register`, {
+                    username: registerUsername.value,
+                    password: registerPassword.value
+                })
+
+                Toastify({                                       // Display success message - not working
+                    text: "Registration approved!", duration: 3000, close: true, gravity: "top-right", position: "right",
+                    backgroundColor: "green", stopOnFocus: true,
+                }).showToast();
+            } catch (error) {
+
+                Toastify({                                          // Display error message
+                    text: "Registration failed. Please try again.", duration: 4000, close: true,
+                    gravity: "top", position: "left", backgroundColor: "red", stopOnFocus: true,
+                }).showToast();
+                console.error(error);
+            }
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- Footer -->
+    <footer class="footer mt-5 bg-burgundy text-yellow">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2024 Books & Scrolls. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-right">
+                    <p>Email: contact@booksandscrolls.com</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>
