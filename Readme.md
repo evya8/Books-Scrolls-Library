@@ -11,6 +11,8 @@ First I will lay out the project for you to know it, then I will walk you throug
    - **Title:** Title of the book.
    - **Author:** Author of the book.
    - **Year Published:** Year the book was published.
+   - **Category:** Book Category
+   - **Book Description:** short Description
    - **Type (1/2/3):** Book type, determining the maximum loan time.
    - **Book Status:** Is this book loaned or avialable to loan.
 
@@ -50,9 +52,7 @@ The Data Access Layer is implemented with classes for each entity using SQLAlche
 - **`loans`:** Defines the `Loans` class for loan-related operations.
 
 ### Unit Tests:
-- **`test_books.py`:** Unit tests for the `Books` class.
-- **`test_customers.py`:** Unit tests for the `Customers` class.
-- **`test_loans.py`:** Unit tests for the `Loans` class.
+- ** Run insertdata.py in terminal to insert data to the database for testing
 
 ## Client Application
 
@@ -77,6 +77,6 @@ The client application provides a simple menu-driven interface with the followin
 2. Open Virtual env
 3. Install Requirements.txt
 4. Run the Flask app: `python app.py` MAC : `python3 app.py`
-5. Open browser at local to view project
+5. Open index.html with liveserver
 
 Feel free to enhance the project for production use by adding features like authentication, error handling, and security measures.

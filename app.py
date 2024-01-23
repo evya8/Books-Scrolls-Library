@@ -1,23 +1,40 @@
-from flask import Flask , session , request , jsonify
+
+import os
+from flask import Flask, render_template  , request , jsonify 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 from datetime import datetime, timedelta
-import sqlite3
+from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required, create_access_token
+from flask_bcrypt import Bcrypt
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 app.secret_key = 'your_secret_key'
 
 # SQLAlchemy configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///databasebooksandscrolls.db'  
-# Use SQLite database named 'databasebooksandscrolls.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///databasebooksandscrolls.db'  # Use SQLite database named 'databasebooksandscrolls.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# JWT configuration
+app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=12)  # Set the expiration time for token
+app.config["JWT_ALGORITHM"] = "HS256"  # Set the algorithm
+jwt = JWTManager(app)    # Initialize JWT 
+# Upload folder and default image configuration
+app.config["UPLOAD_FOLDER"] = "static/images/uploads"
+app.config["DEFAULT_IMG"] = "static/images/bookcover.jpeg"
+
 db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+
 
 #Defining the Books Table
 class Books(db.Model):
     book_id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(30), nullable=False)
     author = db.Column(db.String(30))
+    category = db.Column(db.String(15))
     description = db.Column(db.String(300))
     year_published = db.Column(db.Integer, CheckConstraint('length(year_published) = 4'))
     book_type = db.Column(db.Integer, CheckConstraint('book_type IN (1, 2, 3)'))
@@ -53,11 +70,13 @@ class Loans(db.Model):
 class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(1000), nullable=False)
-   
+    password = db.Column(db.String(300), nullable=False)
+    user_role = db.Column(db.String(50), default='user')  
+
 @app.route('/')
 def home():
-        return "home"
+    return "Please Run index.html with live server"
+        
                                                     ###---Routes---###
                                                     #----------------CRUD For Books Table------------#
 
@@ -67,6 +86,7 @@ def add_book():
         data = request.get_json()
         title = data.get("title")
         author = data.get("author")
+        category = data.get("category")
         description = data.get("description")
         year_published = data.get("year_published")
         book_type = data.get("book_type")
@@ -74,7 +94,7 @@ def add_book():
         photo_url = data.get("photo_url")
 
         # Validate required fields
-        if None in [title, author,description, year_published]:
+        if None in [title, author,category,description, year_published]:
             return jsonify({"error": "Missing required fields"}), 400
         # Validate data types if needed
         book = Books(title=title, author=author,description=description, year_published=year_published,
@@ -87,28 +107,54 @@ def add_book():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/books', methods=['GET'])                    ## Read - Display all Books in the Library
+                                               ## Read - Display all Books in the Library
+@app.route('/books', methods=['GET', 'OPTIONS'])
 def get_books():
     try:
-        books = []
-        for book in Books.query.all():
-            books.append({
+        title = request.args.get('title')
+
+        if title:
+            # If a title is provided, filter by title
+            books_data = Books.query.filter(Books.title.ilike(f"%{title}%")).all()
+        else:
+            # If no title is provided, get all books
+            books_data = Books.query.all()
+
+        # Convert book types based on your logic
+        for book in books_data:
+            if book.book_type == 1:
+                book.book_type = "10 Days"
+            elif book.book_type == 2:
+                book.book_type = "5 Days"
+            elif book.book_type == 3:
+                book.book_type = "2 Days"
+            else:
+                return jsonify({"error": "Invalid book type"}), 400
+
+        # Consolidate the data into a list of dictionaries
+        books = [
+            {
                 "book_id": book.book_id,
                 "title": book.title,
                 "author": book.author,
-                "description":book.description,
+                "category": book.category,
+                "description": book.description,
                 "year_published": book.year_published,
-                "book_type": book.book_type,
+                "book_type": book.book_type,  # Updated book type
                 "book_status": book.book_status,
                 "photo_url": book.photo_url
-            })
+            }
+            for book in books_data
+        ]
         return jsonify(books)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-      
-@app.route('/upd_book/<int:book_id>', methods=['PUT'])         ## Update - Update and change Book details
+                          
+@app.route('/upd_book/<int:book_id>', methods=['OPTIONS', 'PUT'])         ## Update - Update and change Book details
 def upd_book(book_id):
+ 
     book_to_update = Books.query.get(book_id)
+    
     if not book_to_update:                              # Checking the book exist
         return jsonify({"error": "Book not found"}), 404
 
@@ -117,16 +163,17 @@ def upd_book(book_id):
             data = request.get_json()
             book_to_update.title = data.get('title', book_to_update.title)
             book_to_update.author = data.get('author', book_to_update.author)
+            book_to_update.category = data.get('category', book_to_update.category)
             book_to_update.description = data.get('description', book_to_update.description)
             book_to_update.year_published = data.get('year_published', book_to_update.year_published)
             book_to_update.book_type = data.get('book_type', book_to_update.book_type)
             book_to_update.book_status = data.get('book_status', book_to_update.book_status)
             book_to_update.photo_url = data.get('photo_url', book_to_update.photo_url)
-
+      
             db.session.commit()           # Commit the changes to the database
-            return jsonify({'message': f'The Book "{book_to_update.title}" was updated successfully'}), 200
+            return jsonify({'message': f'The Book "{book_to_update.title}" was updated successfully'}), 204
         except Exception as e:
-            db.session.rollback()
+           
             return jsonify({'error': f'Error updating book: {str(e)}'}), 500
     else:
         return jsonify({'error': 'Invalid request method'}), 405
@@ -156,10 +203,12 @@ def add_customer():
         age = data.get("age")
         phone_number = data.get("phone_number")
         email = data.get("email")
+    
 
         # Validate required fields
         if None in [full_name, phone_number,email]:
             return jsonify({"error": "Missing required fields"}), 400
+        
         # Validate data types if needed
         customer = Customers(full_name=full_name, city=city,age=age, phone_number=phone_number,
                      email=email)
@@ -174,19 +223,37 @@ def add_customer():
 @app.route('/customers', methods=['GET'])                    ## Read - Display all Customers of the Library
 def get_customers():
     try:
-        customers = []
-        for customer in Customers.query.all():
-            customers.append({
+        # Retrieve the 'full_name' parameter from request.args
+        full_name = request.args.get('full_name')
+
+        # Check if a search term is provided
+        if full_name:
+            # Perform a case-insensitive search using LIKE
+            customers_data = Customers.query.filter(Customers.full_name.ilike(f"%{full_name}%")).all()
+        else:
+            # If no search term, return all customers
+            customers_data = Customers.query.all()
+
+        # Convert the customers data to a list of dictionaries
+        customers_info = [
+            {
                 "customer_id": customer.customer_id,
                 "full_name": customer.full_name,
                 "city": customer.city,
-                "age":customer.age,
+                "age": customer.age,
                 "phone_number": customer.phone_number,
                 "email": customer.email
-            })
-        return jsonify(customers)
+            }
+            for customer in customers_data
+        ]
+
+        return jsonify(customers_info)
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(e)
+        return jsonify({"error": "Unable to fetch customer data"}), 500
+
+
  
 @app.route('/upd_customer/<int:customer_id>', methods=['PUT'])         ## Update - Update and change Customer details
 def upd_customer(customer_id):
@@ -336,7 +403,71 @@ def loan(loan_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": f"Error deleting book: {str(e)}"}), 500     
+ 
+                                                        #---------------- Login/Register------------#
+            
+                                                            ## User register
+@app.route('/user/register', methods=['POST'])
+def register():
 
+    data=request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    
+    # Check if the username is already taken
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        return jsonify({'message': 'Username is already taken'}), 400
+
+    # # Hash and salt the password using Bcrypt
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    # # Create a new user and add to the database
+    new_user = User(username=username, password=hashed_password,user_role="user")
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({'message': 'User created successfully'}), 201
+
+
+@app.route('/user/login', methods=['POST'])                 ## User login
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    user = User.query.filter_by(username=username).first()
+
+    if user and bcrypt.check_password_hash(user.password, password):
+    
+        return jsonify(), 200
+
+
+
+
+                                                    #-----------Images Routes (Upload and Display)---------------#
+@app.route('/upload',methods=['POST'])     ## Upload the image
+def upload():
+        file = request.files['file']
+        if file:
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            return {'message': 'success', 'filename': file.filename}, 201
+        return {'message': 'File upload failed'}, 500
+
+@app.route('/images', methods=['GET'])      ## Displays the images
+def get_images():
+    image_list = []
+    upload_dir = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+    for filename in os.listdir(upload_dir):
+        if filename.endswith('.jpg') or filename.endswith('.png'):  # Adjust for other image formats if needed
+            image_list.append(f"http://127.0.0.1:5000/uploads/{filename}")  # Replace with your server URL and path
+    return jsonify({'images': image_list})
+
+
+                                                 ## Customer Library card
 
 
 
@@ -344,10 +475,3 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         app.run(debug=True)
-  
-   
-
-
-
-
-

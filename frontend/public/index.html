@@ -33,26 +33,13 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item active">
-                    <a class="nav-link text-purple" href="#">Home</a>
+                    <a class="nav-link text-purple" href="index.html">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-brown" href="#">Register</a>
+                    <a class="nav-link text-yellow" href="../src/library_card.html">My Library Card</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-burgundy" href="#">Login</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-yellow" href="#">My Library Card</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-purple" href="#">Browse Books</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-brown" href="#">Loan a Book</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link text-burgundy" href="#">Logout</a>
+                    <a class="nav-link text-purple" href="../src/librarian_dash.html">Librarian Dashboard</a>
                 </li>
             </ul>
         </div>
@@ -134,9 +121,6 @@
                     username: loginUsername.value,
                     password: loginPassword.value
                 })
-                sessionStorage.setItem("access_token", response.data.access_token)
-
-
                 Toastify({                                      // Display success message
                     text: "Login successful!", duration: 3000, close: true,
                     gravity: "top-right", position: "center", backgroundColor: "green", stopOnFocus: true,
